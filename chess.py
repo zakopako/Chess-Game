@@ -1,0 +1,636 @@
+import pygame
+import pygame.locals
+
+BOARD_DEFAULTS = """rnbqkbnr
+pppppppp
+        
+        
+        
+        
+PPPPPPPP
+RNBQKBNR""".split("\n")
+##Helper Functions
+def LetterToColumnIndex(letter):
+    return (ord(letter.upper()) - ord('A'))#returns an integer by subtracting 2 letter via ord
+
+def ColumnIndexToLetter(column_index):
+    return chr(column_index + ord('A'))
+
+def NumberToRowIndex(number):
+    return 8 - number
+
+def RowIndexToNumber(row_index):
+    return 8 - row_index
+
+def StrPleaseDontPrintNone(value):
+    if value:
+        return str(value)
+    else:
+        return " "
+
+def IsValidSquare(letter, number): #checks if the square is valid and returns bool
+    ascii_index = ord(letter.upper())
+    letter_within_bounds = ord('A') <= ascii_index and ascii_index <= ord('H')
+    return letter_within_bounds and 1 <= number and number <= 8
+
+def AddIntToLetter(integer, letter):
+    return chr(integer + ord(letter))
+
+def AddIntToLetterReturnInt(integer, letter):
+    return (integer + ord(letter))
+
+def GetMoves(integer, integerDirection, letter, letterDirection, piece, valid_moves):
+    if IsValidSquare (AddIntToLetter(letterDirection, letter), integer + integerDirection):
+        existing_piece = piece.board.Get(AddIntToLetter(letterDirection, letter), integer + integerDirection)
+        
+    while IsValidSquare(AddIntToLetter(letterDirection, letter), integer + integerDirection) and not existing_piece:
+        piece.AppendValidMove(AddIntToLetter(letterDirection, letter), integer + integerDirection , valid_moves)
+        letter = AddIntToLetter(letterDirection, letter)
+        integer += integerDirection
+        if IsValidSquare(AddIntToLetter(letterDirection, letter), integer + integerDirection):
+            existing_piece = piece.board.Get(AddIntToLetter(letterDirection, letter), integer + integerDirection)
+    piece.AppendValidCapture(AddIntToLetter(letterDirection, letter), integer + integerDirection , valid_moves)    
+    return valid_moves
+        
+##End of Helper Functions
+
+##Classes
+class Piece():
+    def __init__(self, letter, number, color, board):
+        self.letter = letter
+        self.number = number
+        self.color = color ## boolean; false = black = lowercase
+        self.board = board
+        self.valid_moves = []
+
+    def AppendValidMove(self, letter, number, valid_moves):
+        if IsValidSquare(letter, number):
+            existing_piece = self.board.Get(letter, number)
+            if not existing_piece:
+                valid_moves.append([letter, number])
+
+    def AppendValidCapture(self, letter, number, valid_moves):
+        if IsValidSquare(letter, number):
+            existing_piece = self.board.Get(letter, number)
+            if existing_piece and existing_piece.color != self.color:
+                valid_moves.append([letter, number])
+
+    def GetValidMoves(self):
+        ## To be Implemented by Child Class
+        pass
+
+    def __str__(self):
+        ## To be Overridden by Child Class
+        return "(" + self.letter + " " + str(self.number) + ")"
+
+class Pawn(Piece):
+    def __init__(self, letter, number, color, board):
+        Piece.__init__(self, letter, number, color, board)
+        self.start_letter = self.letter
+        self.start_number = self.number
+
+    def GetValidMoves(self):
+        valid_moves = []
+        direction = -1
+        if self.color:
+            direction = 1
+
+        ## 1. Forward 1 square
+        self.AppendValidMove(self.letter, self.number + direction, valid_moves)
+        
+        ## 2. Forward 2 squares
+        was_able_to_move = len(valid_moves) > 0
+        if was_able_to_move and ((self.color and self.number == 2) or (not self.color and self.number == 7)):
+            self.AppendValidMove(self.letter, self.number + direction * 2, valid_moves)
+
+        ## 3. Diagonal captures
+        ## a) Diagonal Left
+        self.AppendValidCapture(AddIntToLetter(-1, self.letter), self.number + direction, valid_moves)
+        ## b) Diagonal Right
+        self.AppendValidCapture(AddIntToLetter(1, self.letter), self.number + direction, valid_moves)
+
+        return valid_moves
+
+    def __str__(self):
+        if not self.color:
+            return "p"
+        else:
+            return "P"
+
+class Knight(Piece):
+    def __init__(self, letter, number, color, board):
+        Piece.__init__(self, letter, number, color, board)
+
+    def GetValidMoves(self):
+        valid_moves = []
+        possible_moves = [(2,1),(2,-1),(-2,1),(-2,-1),(1,2),(1,-2),(-1,2),(-1,-2)]
+        for move_letter,move_number in possible_moves:
+            self.AppendValidMove(AddIntToLetter(move_letter, self.letter), self.number+move_number, valid_moves)
+            self.AppendValidCapture(AddIntToLetter(move_letter, self.letter), self.number+move_number, valid_moves)
+    
+        
+        return valid_moves
+
+    def __str__(self):
+        if not self.color:
+            return "n"
+        else:
+            return "N"
+
+class Bishop(Piece):
+    def __init__(self, letter, number, color, board):
+        Piece.__init__(self, letter, number, color, board)
+    
+    def GetValidMoves(self):
+        diagonal_move_letter = self.letter
+        diagonal_move_number = self.number
+        valid_moves= []
+        possible_moves = [(1,1),(1,-1),(-1,1),(-1,-1)]
+        for move_letter,move_number in possible_moves:
+            GetMoves(diagonal_move_number, move_number, diagonal_move_letter, move_letter, self, valid_moves)
+        return valid_moves
+
+    def __str__(self):
+        if not self.color:
+            return "b"
+        else:
+            return "B"
+
+class Rook(Piece):
+    def __init__(self, letter, number, color, board):
+        Piece.__init__(self, letter, number, color, board)
+        self.move_counter = False
+
+    def GetStartLetter(self):
+        return start_letter
+    
+    def GetStartNumber(self):
+        return start_number
+
+    def GetValidMoves(self):
+        valid_moves = []
+        diagonal_move_letter = self.letter
+        diagonal_move_number = self.number
+        possible_moves = [(1,0),(0,-1),(-1,0),(0,1)]
+        for move_letter,move_number in possible_moves:
+            GetMoves(diagonal_move_number, move_number, diagonal_move_letter, move_letter, self, valid_moves)
+        return valid_moves
+
+    def __str__(self):
+        if not self.color:
+            return "r"
+        else:
+            return "R"
+
+class Queen(Piece):
+    def __init__(self, letter, number, color, board):
+        Piece.__init__(self, letter, number, color, board)
+
+    def GetValidMoves(self):
+        diagonal_move_letter = self.letter
+        diagonal_move_number = self.number
+        valid_moves= []
+        possible_moves = [(1,0),(0,-1),(-1,0),(0,1),(1,1),(1,-1),(-1,1),(-1,-1)]
+        for move_letter,move_number in possible_moves:
+            GetMoves(diagonal_move_number, move_number, diagonal_move_letter, move_letter, self, valid_moves)
+        return valid_moves
+
+    def __str__(self):
+        if not self.color:
+            return "q"
+        else:
+            return "Q"
+
+class King(Piece):
+    def __init__(self, letter, number, color, board):
+        Piece.__init__(self, letter, number, color, board)
+        self.move_counter = False
+        
+    def GetStartLetter(self):
+        return start_letter
+    
+    def GetStartNumber(self):
+        return start_number
+    
+    def GetValidMoves(self):
+        valid_moves = []
+        possible_moves = [(1,0),(0,-1),(-1,0),(0,1),(1,1),(1,-1),(-1,1),(-1,-1)]
+        for move_letter,move_number in possible_moves:
+            self.AppendValidMove(AddIntToLetter(move_letter, self.letter), self.number+move_number, valid_moves)
+            self.AppendValidCapture(AddIntToLetter(move_letter, self.letter), self.number+move_number, valid_moves)
+        return valid_moves
+    def __str__(self):
+        if not self.color:
+            return "k"
+        else:
+            return "K"
+
+def GeneratePiece(character, letter, number, board):
+    if character.lower() == "p":
+        return Pawn(letter, number, character.upper() == character, board) #character.upper() == character returns a boolean. If its a lower case, returns false, else true.
+    elif character.lower() == "n":
+        return Knight(letter, number, character.upper() == character, board)
+    elif character.lower() == "b":
+        return Bishop(letter, number, character.upper() == character, board)
+    elif character.lower() == "r":
+        return Rook(letter, number, character.upper() == character, board)
+    elif character.lower() == "q":
+        return Queen(letter, number, character.upper() == character, board)
+    elif character.lower() == "k":
+        return King(letter, number, character.upper() == character, board)
+    else:
+        return None
+
+class Board():
+    def __init__(self):
+        self.grid = []
+        self.en_passant_victim = None
+
+        for i in range(8):
+            row = []
+
+            for j in range(8):
+                letter = ColumnIndexToLetter(j)
+                number = RowIndexToNumber(i)
+                valid_moves = []
+                row.append(GeneratePiece(BOARD_DEFAULTS[i][j], letter, number, self))
+ 
+            self.grid.append(row)
+
+    ## Get the piece located at letter, number
+    def Get(self, letter, number):
+        return self.grid[NumberToRowIndex(number)][LetterToColumnIndex(letter)]
+
+    ## Set the piece located at letter, number, clobbering previous contents
+    def Set(self, letter, number, piece):
+        self.grid[NumberToRowIndex(number)][LetterToColumnIndex(letter)] = piece
+        if piece:
+            piece.letter = letter.upper()
+            piece.number = number
+
+    ## Assumes positions are correct when making the move
+    def Move(self, start_letter, start_number, end_letter, end_number):
+        piece_to_move = self.Get(start_letter, start_number)
+                        
+        ## Handle en passant
+        if isinstance(piece_to_move, Pawn) and end_letter != start_letter and not self.Get(end_letter, end_number):
+            self.Set(self.en_passant_victim.letter, self.en_passant_victim.number, None)
+        
+        if isinstance(piece_to_move, Pawn) and abs(end_number - piece_to_move.start_number) == 2:
+            self.en_passant_victim = piece_to_move
+        else:
+            self.en_passant_victim = None
+
+        ##Handle Castle
+        if isinstance(piece_to_move, King) and abs(AddIntToLetterReturnInt(0, end_letter) - AddIntToLetterReturnInt(0, piece_to_move.letter)) == 2:
+            for row in self.grid:
+                for rook in row:
+                    if isinstance(rook, Rook):
+                        
+                        if piece_to_move.color:
+                            if end_letter == 'G' and end_number == 1 and rook.letter == 'H' and rook.number == 1:
+                                self.Set('F',1,rook)
+                                rook.move_counter += 1
+                                self.Set('H', 1, None)
+                            if end_letter == 'C' and end_number == 1  and rook.letter == 'A' and rook.number == 1:
+                                self.Set('D',1,rook)
+                                rook.move_counter += 1
+                                self.Set('A', 1, None)
+                        else:
+                            if end_letter == 'G' and end_number == 8  and rook.letter == 'H' and rook.number == 8:
+                                self.Set('F',8,rook)
+                                rook.move_counter += 1
+                                self.Set('H', 8, None)
+                            if end_letter == 'C' and end_number == 8  and rook.letter == 'A' and rook.number == 8:
+                                self.Set('D',8,rook)
+                                rook.move_counter += 1
+                                self.Set('A', 8, None)
+                    piece.move_counter += 1
+                    
+        if isinstance(piece_to_move, King):
+            piece_to_move.move_counter == True
+        elif isinstance(piece, Rook):
+            piece_to_move.move_counter == True
+
+        ## Handle Promoting of a pawn
+
+        if isinstance(piece_to_move, Pawn):
+            if piece_to_move.color:
+                if end_number == 8:
+                    while True:
+                        promotion = input("Pick a piece: Q, R, B, N")
+                        print(promotion)
+                        if promotion.upper() == 'Q':
+                            new_queen = Queen(end_letter, end_number, True, self)
+                            self.Set(end_letter, end_number, new_queen)
+                            self.Set(start_letter, start_number, None)
+                            break
+                        elif promotion.upper() == 'R':
+                            new_rook = Rook(end_letter, end_number, True, self)
+                            self.Set(end_letter, end_number, new_rook)
+                            self.Set(start_letter, start_number, None)
+                            break
+                        elif promotion.upper() == 'B':
+                            new_bishop = Bishop(end_letter, end_number, True, self)
+                            self.Set(end_letter, end_number, new_bishop)
+                            self.Set(start_letter, start_number, None)
+                            break
+                        elif promotion.upper() == 'N':
+                            new_knight = Knight(end_letter, end_number, True, self)
+                            self.Set(end_letter, end_number, new_knight)
+                            self.Set(start_letter, start_number, None)
+                            break
+                        else:
+                            print("Invalid choice")
+                            
+            if not piece_to_move.color:
+                if end_number == 1:
+                    while True:
+                        promotion = input("Pick a piece: q, r, b, n")
+                        if promotion.lower() == 'q':
+                            new_queen = Queen(end_letter, end_number, False, self)
+                            self.Set(end_letter, end_number, new_queen)
+                            self.Set(start_letter, start_number, None)
+                            break
+                        elif promotion.lower() == 'r':
+                            new_rook = Rook(end_letter, end_number, False, self)
+                            self.Set(end_letter, end_number, new_rook)
+                            self.Set(start_letter, start_number, None)
+                            break
+                        elif promotion.lower() == 'b':
+                            new_bishop = Bishop(end_letter, end_number, False, self)
+                            self.Set(end_letter, end_number, new_bishop)
+                            self.Set(start_letter, start_number, None)
+                            break
+                        elif promotion.lower() == 'n':
+                            new_knight = Knight(end_letter, end_number, False, self)
+                            self.Set(end_letter, end_number, new_knight)
+                            self.Set(start_letter, start_number, None)
+                            break
+                        else:
+                            print("Invalid choice")
+                            
+        if isinstance(piece_to_move, Pawn):
+            if end_number == 8 and piece_to_move.color:
+                pass
+            elif end_number == 1 and not piece_to_move.color:
+                pass
+            else:
+                self.Set(end_letter, end_number, piece_to_move)
+                self.Set(start_letter, start_number, None)
+        else:
+            self.Set(end_letter, end_number, piece_to_move)
+            self.Set(start_letter, start_number, None)
+
+    ## Used to differentiate an actual move or a simple check in position
+    def TempMove(self, start_letter, start_number, end_letter, end_number):
+        piece_to_move = self.Get(start_letter, start_number)
+        self.Set(end_letter, end_number, piece_to_move)
+        self.Set(start_letter, start_number, None)
+        
+
+    ## Finds the king of the specified color and checks to see if other pieces could move to the kings current location    
+    def IsInCheck(self, king_color):
+        other_valid_moves = []
+        king_coord = []
+        for row in self.grid:
+          for piece in row:
+            if isinstance(piece, King) and piece.color == king_color:
+                king_coord += [piece.letter, piece.number]
+            elif piece:
+                if piece.color != king_color:
+                    other_valid_moves += piece.GetValidMoves()
+        return king_coord in other_valid_moves
+
+    def GetLegalMoves(self):
+        result = {}
+        for row in self.grid:
+            for piece in row:
+                if piece:
+                    legal_moves = [] 
+                    keep_letter = piece.letter
+                    keep_number = piece.number
+                    
+                    ## filters out possible moves and adds them to legal_moves
+                    for moves in piece.GetValidMoves():
+                        capture = self.Get(moves[0],moves[1])
+                        save_piece = capture
+                        save_piece_letter = moves[0]
+                        save_piece_number = moves[1]
+                        self.TempMove(piece.letter, piece.number, moves[0], moves[1])
+                        if not self.IsInCheck(piece.color):
+                            legal_moves.append([moves[0],moves[1]])
+                        self.TempMove(piece.letter, piece.number, keep_letter, keep_number)
+                        self.Set(save_piece_letter, save_piece_number, save_piece)
+
+                    ## en passant special case
+                    if isinstance(piece, Pawn):
+                        if self.en_passant_victim and self.en_passant_victim.number == piece.number:
+                            left_letter = AddIntToLetter(-1, piece.letter)
+                            right_letter = AddIntToLetter(1, piece.letter)
+                            directions = [left_letter, right_letter]
+                            for direction in directions:
+                                if self.en_passant_victim.letter == direction:
+                                    if self.en_passant_victim.color != piece.color:
+                                        if piece.color:
+                                            destination_number = self.en_passant_victim.number + 1
+                                        else:
+                                            destination_number = self.en_passant_victim.number - 1
+                                        if IsValidSquare(direction, destination_number):
+                                            save_piece_letter = piece.letter
+                                            save_piece_number = piece.number
+                                            
+                                            self.TempMove(piece.letter, piece.number, direction, destination_number)
+                                            if not self.IsInCheck(piece.color):
+                                                legal_moves.append([direction, destination_number])
+                                            self.TempMove(piece.letter, piece.number, save_piece_letter, save_piece_number)
+
+                    ## Castling special case
+                    if isinstance(piece, King):
+                        if not piece.move_counter:  ##check if king has not moved
+                            if piece.color: ## check if its white or black
+                                for row2 in self.grid:
+                                    for rook in row2:
+                                        if isinstance(rook, Rook): ## find a rook
+                                            if rook.color and not rook.move_counter and rook.letter == 'H':  ## check to see if it is a white rook that hasnt moved on H1
+                                                if not self.Get('F',1) and not self.Get('G',1): ## check to see if there are pieces in between rook and king
+                                                    if not self.IsInCheck(piece.color): ## check to see if king is currently in check
+                                                        save_piece_letter = piece.letter
+                                                        save_piece_number = piece.number
+                                                        squares = [('F',1),('G',1)]
+                                                        
+                                                        safe_square = 0
+                                                        for square in squares:
+                                                            self.TempMove(piece.letter, piece.number, square[0], square[1])
+                                                            if not self.IsInCheck(piece.color):
+                                                                safe_square += 1
+                                                            self.TempMove(piece.letter, piece.number, save_piece_letter, save_piece_number)
+                                                        if safe_square == 2: ## if king doesnt castle through check -> safe_square == 2
+                                                            legal_moves.append(['G',1])
+                                                                
+                                            if rook.color and not rook.move_counter and rook.letter == 'A': ## check to see if it is a white rook that hasnt moved on A1
+                                                if not self.Get('B',1) and not self.Get('C',1) and not self.Get('D',1): ## check to see if there are pieces between rook and king
+                                                    if not self.IsInCheck(piece.color):
+                                                        save_piece_letter = piece.letter
+                                                        save_piece_number = piece.number
+                                                        squares = [('C',1),('D',1)]
+
+                                                        safe_square = 0
+                                                        for square in squares:
+                                                            self.TempMove(piece.letter, piece.number, square[0], square[1])
+                                                            if not self.IsInCheck(piece.color):
+                                                                safe_square += 1
+                                                            self.TempMove(piece.letter, piece.number, save_piece_letter, save_piece_number)
+                                                        if safe_square == 2:
+                                                            legal_moves.append(['C',1])
+
+                            else: ## king is black
+                                for row2 in self.grid:
+                                    for rook in row2: 
+                                        if isinstance(rook, Rook):
+                                            if not rook.color and not rook.move_counter and rook.letter == 'H': ## find a black rook that hasnt moved on H8
+                                                if not self.Get('F',8) and not self.Get('G',8):
+                                                    if not self.IsInCheck(piece.color):
+                                                        save_piece_letter = piece.letter
+                                                        save_piece_number = piece.number
+                                                        squares = [('F',8),('G',8)]
+
+                                                        safe_square = 0
+                                                        for square in squares:
+                                                            self.TempMove(piece.letter, piece.number, square[0], square[1])
+                                                            if not self.IsInCheck(piece.color):
+                                                                safe_square += 1
+                                                            self.TempMove(piece.letter, piece.number, save_piece_letter, save_piece_number)
+                                                        if safe_square == 2:
+                                                            legal_moves.append(['G',8])
+
+                                            if not rook.color and not rook.move_counter and rook.letter == 'A':
+                                                if not self.Get('B',8) and not self.Get('C',8) and not self.Get('D',8):
+                                                    if not self.IsInCheck(piece.color):
+                                                        save_piece_letter = piece.letter
+                                                        save_piece_number = piece.number
+                                                        squares = [('C',8),('D',8)]
+
+                                                        safe_square = 0
+                                                        for square in squares:
+                                                            self.TempMove(piece.letter, piece.number, square[0], square[1])
+                                                            if not self.IsInCheck(piece.color):
+                                                                safe_square += 1
+                                                            self.TempMove(piece.letter, piece.number, save_piece_letter, save_piece_number)
+                                                        if safe_square == 2:
+                                                            legal_moves.append(['C',8])
+
+                    result[piece] = legal_moves
+        return result                                       
+        
+    def __str__(self):
+        s = "  |" + "A B C D E F G H|  \n"
+        s += "--+---------------+--\n"
+        for i in range(8):
+            s += str(RowIndexToNumber(i)) + " |"
+            row = self.grid[i]
+            for j in range(8):
+                if j > 0:
+                    s += " "
+                if row[j]:
+                    s += str(row[j])
+                else:
+                    if (j + i % 2) % 2 == 0:
+                        s += " "
+                    else:
+                        s += "*"
+            s += "| " + str(RowIndexToNumber(i)) + "\n"
+        s += "--+---------------+--\n"
+        s += "  |" + "A B C D E F G H|  "
+        return s
+
+pygame.init()
+screen = pygame.display.set_mode([800,800])
+pygame.display.set_caption('Chess')
+running = True
+board = Board()
+player_turn = True
+
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    screen.fill((150, 200, 100))
+    square_offset = 0
+    for row in range(0, 801, 100):
+        for column in range(0, 801, 200):
+            pygame.draw.rect(screen, (240,240,240), (row, column+square_offset, 100, 100))
+        square_offset += 100
+        if square_offset > 100:
+            square_offset = 0
+    
+    pygame.display.flip()
+    
+pygame.quit()
+while True:
+    
+    print(board)
+    if player_turn:
+        print("White's Turn")
+    else:
+        print("Black's Turn")
+    choose_piece = input("Choose a piece to move (example 'E1') -1 to surrender\n")
+    if choose_piece == "-1":
+        print("Player Surrender")
+        break
+    else:
+        try:
+            if choose_piece[0].upper() in ['A','B','C','D','E','F','G','H']:
+                letter_from = choose_piece[0].upper()
+                if int(choose_piece[1]) in [1,2,3,4,5,6,7,8]:
+                    number_from = int(choose_piece[1])
+                    if IsValidSquare(letter_from, number_from):
+                        if isinstance(board.Get(letter_from, number_from), Piece):
+                            if board.Get(letter_from, number_from).color == player_turn:
+                                piece = board.Get(letter_from, number_from)
+                                all_legal_moves = board.GetLegalMoves()
+                                piece_legal_moves = all_legal_moves[piece]
+                                print(piece_legal_moves)
+                                player_move = input("Choose a move from the list of valid moves\n")
+                                if player_move:
+                                    letter_to = player_move[0].upper()
+                                    number_to = int(player_move[1])
+                                    if [letter_to, number_to] in piece_legal_moves:
+                                        board.Move(letter_from, number_from, letter_to, number_to)
+                                        if player_turn:
+                                            player_turn = False
+                                        else:
+                                            player_turn = True
+                                    else:
+                                        print("Invalid Move")
+                                elif player_move == "-1":
+                                    print("Player Surrender")
+                                    break
+                                else:
+                                    print("You must pick a move")
+                            else:
+                                print("Invalid Piece")
+                        else:
+                            print("Pick a Valid Piece!")
+                    else:
+                        print("Invalid square")
+                else:
+                    print("Invalid number")
+            else:
+                print("Invalid letter")
+                    
+        except ValueError:
+            print("Please follow the example")
+
+             
+
+## alt + 3 = comment highlighted rows; alt + 4 = uncomment highlighted rows
+## ctrl + [ or ctrl + ] = indent or dedent
+## undo is ctrl + z; redo is ctrl + shift + z
+
+## while(game is going):
+##    get the turn
+##    ask for the move
+##    verify the move
+##    do the move
+##    swap turns
