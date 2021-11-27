@@ -5,4 +5,4 @@ I wanted to create this game in order to start getting the gears grinding as I h
 
 Update: I have completed the base game and it runs in idle. I am going to take it to the next step and bring it in a GUI using pygame.
 
-Update2: Implemented character models and puts them in the correct position.
+Update2: Implemented piece models and puts them in the correct position.
