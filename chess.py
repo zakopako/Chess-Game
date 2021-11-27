@@ -13,14 +13,24 @@ RNBQKBNR""".split("\n")
 def LetterToColumnIndex(letter):
     return (ord(letter.upper()) - ord('A'))#returns an integer by subtracting 2 letter via ord
 
+def LetterToColumnIndexToBoard(letter):
+    return (ord(letter.upper()) - ord('A'))*100
+
 def ColumnIndexToLetter(column_index):
     return chr(column_index + ord('A'))
+
+
+def BoardToColumnIndexToLetter(board_pos):
+    return chr(
 
 def NumberToRowIndex(number):
     return 8 - number
 
 def RowIndexToNumber(row_index):
     return 8 - row_index
+
+def NumberToRowIndexToBoard(number):
+    return (8 - number) * 100
 
 def StrPleaseDontPrintNone(value):
     if value:
@@ -290,20 +300,20 @@ class Board():
                         if piece_to_move.color:
                             if end_letter == 'G' and end_number == 1 and rook.letter == 'H' and rook.number == 1:
                                 self.Set('F',1,rook)
-                                rook.move_counter += 1
+                                rook.move_counter = True
                                 self.Set('H', 1, None)
                             if end_letter == 'C' and end_number == 1  and rook.letter == 'A' and rook.number == 1:
                                 self.Set('D',1,rook)
-                                rook.move_counter += 1
+                                rook.move_counter = True
                                 self.Set('A', 1, None)
                         else:
                             if end_letter == 'G' and end_number == 8  and rook.letter == 'H' and rook.number == 8:
                                 self.Set('F',8,rook)
-                                rook.move_counter += 1
+                                rook.move_counter = True
                                 self.Set('H', 8, None)
                             if end_letter == 'C' and end_number == 8  and rook.letter == 'A' and rook.number == 8:
                                 self.Set('D',8,rook)
-                                rook.move_counter += 1
+                                rook.move_counter = True
                                 self.Set('A', 8, None)
                     piece.move_counter += 1
                     
@@ -545,11 +555,27 @@ class Board():
         return s
 
 pygame.init()
+
+## variables for pygame
+
 screen = pygame.display.set_mode([800,800])
 pygame.display.set_caption('Chess')
 running = True
 board = Board()
 player_turn = True
+white_pawn = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhitePawnNoBackground.png')
+white_rook = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteRookNoBackground.png')
+white_bishop = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteBishopNoBackground.png')
+white_knight = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteKnightNoBackground.png')
+white_king = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteKingNoBackground.png')
+white_queen = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteQueenNoBackground.png')
+
+black_pawn = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackPawnNoBackground.png')
+black_rook = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackRookNoBackground.png')
+black_bishop = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackBishopNoBackground.png')
+black_knight = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackKnightNoBackground.png')
+black_king = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackKingNoBackground.png')
+black_queen = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackQueenNoBackground.png')
 
 while running:
     for event in pygame.event.get():
@@ -559,13 +585,51 @@ while running:
     square_offset = 0
     for row in range(0, 801, 100):
         for column in range(0, 801, 200):
-            pygame.draw.rect(screen, (240,240,240), (row, column+square_offset, 100, 100))
+            pygame.draw.rect(screen, (240,240,240), (row, column + square_offset, 100, 100))
         square_offset += 100
         if square_offset > 100:
             square_offset = 0
-    
+        for row in board.grid:
+            for piece in row:
+                if piece:
+                    letter = piece.letter
+                    number = piece.number
+                    color = piece.color
+                    
+                    if isinstance(piece, Pawn) and color:
+                        screen.blit(white_pawn,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    if isinstance(piece, Rook) and color:
+                        screen.blit(white_rook,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    if isinstance(piece, Knight) and color:
+                        screen.blit(white_knight,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    if isinstance(piece, Bishop) and color:
+                        screen.blit(white_bishop,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    if isinstance(piece, King) and color:
+                        screen.blit(white_king,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    if isinstance(piece, Queen) and color:
+                        screen.blit(white_queen,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                        
+                    if isinstance(piece, Pawn) and not color:
+                        screen.blit(black_pawn,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    if isinstance(piece, Rook) and not color:
+                        screen.blit(black_rook,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    if isinstance(piece, Knight) and not color:
+                        screen.blit(black_knight,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    if isinstance(piece, Bishop) and not color:
+                        screen.blit(black_bishop,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    if isinstance(piece, King) and not color:
+                        screen.blit(black_king,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    if isinstance(piece, Queen) and not color:
+                        screen.blit(black_queen,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+
+        if pygame.event.get(MOUSEBUTTONDOWN):
+            grid_x, grid_y = pygame.mouse.get_pos()
+            board.Get(
+            
+
     pygame.display.flip()
-    
+
+
 pygame.quit()
 while True:
     
@@ -592,7 +656,7 @@ while True:
                                 piece_legal_moves = all_legal_moves[piece]
                                 print(piece_legal_moves)
                                 player_move = input("Choose a move from the list of valid moves\n")
-                                if player_move:
+                                if player_move and player_move[0] in ['A','B','C','D','E','F','G','H'] and player_move[1] in [1,2,3,4,5,6,7,8]:
                                     letter_to = player_move[0].upper()
                                     number_to = int(player_move[1])
                                     if [letter_to, number_to] in piece_legal_moves:
@@ -623,14 +687,3 @@ while True:
             print("Please follow the example")
 
              
-
-## alt + 3 = comment highlighted rows; alt + 4 = uncomment highlighted rows
-## ctrl + [ or ctrl + ] = indent or dedent
-## undo is ctrl + z; redo is ctrl + shift + z
-
-## while(game is going):
-##    get the turn
-##    ask for the move
-##    verify the move
-##    do the move
-##    swap turns
