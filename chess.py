@@ -13,15 +13,14 @@ RNBQKBNR""".split("\n")
 def LetterToColumnIndex(letter):
     return (ord(letter.upper()) - ord('A'))#returns an integer by subtracting 2 letter via ord
 
-def LetterToColumnIndexToBoard(letter):
-    return (ord(letter.upper()) - ord('A'))*100
-
 def ColumnIndexToLetter(column_index):
     return chr(column_index + ord('A'))
 
+def LetterToColumnIndexToBoard(letter):
+    return (ord(letter.upper()) - ord('A'))*100
 
 def BoardToColumnIndexToLetter(board_pos):
-    return chr(
+    return chr(board_pos // 100 + ord('A'))
 
 def NumberToRowIndex(number):
     return 8 - number
@@ -31,6 +30,9 @@ def RowIndexToNumber(row_index):
 
 def NumberToRowIndexToBoard(number):
     return (8 - number) * 100
+
+def BoardToRowIndexToNumber(board_pos):
+    return 8 - board_pos // 100  
 
 def StrPleaseDontPrintNone(value):
     if value:
@@ -137,8 +139,7 @@ class Knight(Piece):
         for move_letter,move_number in possible_moves:
             self.AppendValidMove(AddIntToLetter(move_letter, self.letter), self.number+move_number, valid_moves)
             self.AppendValidCapture(AddIntToLetter(move_letter, self.letter), self.number+move_number, valid_moves)
-    
-        
+            
         return valid_moves
 
     def __str__(self):
@@ -169,7 +170,7 @@ class Bishop(Piece):
 class Rook(Piece):
     def __init__(self, letter, number, color, board):
         Piece.__init__(self, letter, number, color, board)
-        self.move_counter = False
+        self.move_counter = 0
 
     def GetStartLetter(self):
         return start_letter
@@ -214,7 +215,7 @@ class Queen(Piece):
 class King(Piece):
     def __init__(self, letter, number, color, board):
         Piece.__init__(self, letter, number, color, board)
-        self.move_counter = False
+        self.move_counter = 0
         
     def GetStartLetter(self):
         return start_letter
@@ -295,7 +296,7 @@ class Board():
         if isinstance(piece_to_move, King) and abs(AddIntToLetterReturnInt(0, end_letter) - AddIntToLetterReturnInt(0, piece_to_move.letter)) == 2:
             for row in self.grid:
                 for rook in row:
-                    if isinstance(rook, Rook):
+                    if isinstance(rook, Rook) and piece_to_move.color == rook.color:
                         
                         if piece_to_move.color:
                             if end_letter == 'G' and end_number == 1 and rook.letter == 'H' and rook.number == 1:
@@ -315,12 +316,12 @@ class Board():
                                 self.Set('D',8,rook)
                                 rook.move_counter = True
                                 self.Set('A', 8, None)
-                    piece.move_counter += 1
+                    piece_to_move.move_counter += 1
                     
         if isinstance(piece_to_move, King):
-            piece_to_move.move_counter == True
-        elif isinstance(piece, Rook):
-            piece_to_move.move_counter == True
+            piece_to_move.move_counter += 1
+        elif isinstance(piece_to_move, Rook):
+            piece_to_move.move_counter += 1
 
         ## Handle Promoting of a pawn
 
@@ -330,55 +331,44 @@ class Board():
                     while True:
                         promotion = input("Pick a piece: Q, R, B, N")
                         print(promotion)
-                        if promotion.upper() == 'Q':
-                            new_queen = Queen(end_letter, end_number, True, self)
-                            self.Set(end_letter, end_number, new_queen)
-                            self.Set(start_letter, start_number, None)
-                            break
-                        elif promotion.upper() == 'R':
-                            new_rook = Rook(end_letter, end_number, True, self)
-                            self.Set(end_letter, end_number, new_rook)
-                            self.Set(start_letter, start_number, None)
-                            break
-                        elif promotion.upper() == 'B':
-                            new_bishop = Bishop(end_letter, end_number, True, self)
-                            self.Set(end_letter, end_number, new_bishop)
-                            self.Set(start_letter, start_number, None)
-                            break
-                        elif promotion.upper() == 'N':
-                            new_knight = Knight(end_letter, end_number, True, self)
-                            self.Set(end_letter, end_number, new_knight)
-                            self.Set(start_letter, start_number, None)
+                        if promotion in ['Q','R','B','N']:
                             break
                         else:
                             print("Invalid choice")
+
+                    if promotion.upper() == 'Q':
+                        new_piece = Queen(end_letter, end_number, True, self)
+                    elif promotion.upper() == 'R':
+                        new_piece = Rook(end_letter, end_number, True, self)
+                    elif promotion.upper() == 'B':
+                        new_piece = Bishop(end_letter, end_number, True, self)
+                    elif promotion.upper() == 'N':
+                        new_piece = Knight(end_letter, end_number, True, self)
+                    self.Set(end_letter, end_number, new_piece)
+                    self.Set(start_letter, start_number, None)
                             
             if not piece_to_move.color:
                 if end_number == 1:
                     while True:
-                        promotion = input("Pick a piece: q, r, b, n")
-                        if promotion.lower() == 'q':
-                            new_queen = Queen(end_letter, end_number, False, self)
-                            self.Set(end_letter, end_number, new_queen)
-                            self.Set(start_letter, start_number, None)
-                            break
-                        elif promotion.lower() == 'r':
-                            new_rook = Rook(end_letter, end_number, False, self)
-                            self.Set(end_letter, end_number, new_rook)
-                            self.Set(start_letter, start_number, None)
-                            break
-                        elif promotion.lower() == 'b':
-                            new_bishop = Bishop(end_letter, end_number, False, self)
-                            self.Set(end_letter, end_number, new_bishop)
-                            self.Set(start_letter, start_number, None)
-                            break
-                        elif promotion.lower() == 'n':
-                            new_knight = Knight(end_letter, end_number, False, self)
-                            self.Set(end_letter, end_number, new_knight)
-                            self.Set(start_letter, start_number, None)
+                        promotion = input("Pick a piece: Q, R, B, N")
+                        print(promotion)
+                        if promotion in ['Q','R','B','N']:
                             break
                         else:
                             print("Invalid choice")
+                            
+                    if promotion.upper() == 'Q':
+                        new_queen = Queen(end_letter, end_number, False, self)
+                    if promotion.upper() == 'Q':
+                        new_piece = Queen(end_letter, end_number, False, self)
+                    elif promotion.upper() == 'R':
+                        new_piece = Rook(end_letter, end_number, False, self)
+                    elif promotion.upper() == 'B':
+                        new_piece = Bishop(end_letter, end_number, False, self)
+                    elif promotion.upper() == 'N':
+                        new_piece = Knight(end_letter, end_number, False, self)
+                    self.Set(end_letter, end_number, new_piece)
+                    self.Set(start_letter, start_number, None)
                             
         if isinstance(piece_to_move, Pawn):
             if end_number == 8 and piece_to_move.color:
@@ -556,6 +546,9 @@ class Board():
 
 pygame.init()
 
+
+
+
 ## variables for pygame
 
 screen = pygame.display.set_mode([800,800])
@@ -577,12 +570,50 @@ black_knight = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\
 black_king = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackKingNoBackground.png')
 black_queen = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackQueenNoBackground.png')
 
+future_piece_coord = None
+current_piece_coord = None
+
+def PieceToPicture(piece, color):
+
+    if color:                    
+        if isinstance(piece, Pawn):
+            return white_pawn
+        if isinstance(piece, Rook):
+            return white_rook
+        if isinstance(piece, Knight):
+            return white_knight
+        if isinstance(piece, Bishop):
+            return white_bishop
+        if isinstance(piece, King):
+            return white_king
+        if isinstance(piece, Queen):
+            return white_queen
+
+    else:
+        if isinstance(piece, Pawn):
+            return black_pawn
+        if isinstance(piece, Rook):
+            return black_rook
+        if isinstance(piece, Knight):
+            return black_knight
+        if isinstance(piece, Bishop):
+            return black_bishop
+        if isinstance(piece, King):
+            return black_king
+        if isinstance(piece, Queen):
+            return black_queen
+
 while running:
+    
+    screen.fill((150, 200, 100))
+    square_offset = 0
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    screen.fill((150, 200, 100))
-    square_offset = 0
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            current_piece_coord = future_piece_coord
+            future_piece_coord = [BoardToColumnIndexToLetter(event.pos[0]), BoardToRowIndexToNumber(event.pos[1])]
+            
     for row in range(0, 801, 100):
         for column in range(0, 801, 200):
             pygame.draw.rect(screen, (240,240,240), (row, column + square_offset, 100, 100))
@@ -595,40 +626,34 @@ while running:
                     letter = piece.letter
                     number = piece.number
                     color = piece.color
-                    
-                    if isinstance(piece, Pawn) and color:
-                        screen.blit(white_pawn,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                    if isinstance(piece, Rook) and color:
-                        screen.blit(white_rook,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                    if isinstance(piece, Knight) and color:
-                        screen.blit(white_knight,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                    if isinstance(piece, Bishop) and color:
-                        screen.blit(white_bishop,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                    if isinstance(piece, King) and color:
-                        screen.blit(white_king,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                    if isinstance(piece, Queen) and color:
-                        screen.blit(white_queen,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                        
-                    if isinstance(piece, Pawn) and not color:
-                        screen.blit(black_pawn,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                    if isinstance(piece, Rook) and not color:
-                        screen.blit(black_rook,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                    if isinstance(piece, Knight) and not color:
-                        screen.blit(black_knight,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                    if isinstance(piece, Bishop) and not color:
-                        screen.blit(black_bishop,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                    if isinstance(piece, King) and not color:
-                        screen.blit(black_king,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-                    if isinstance(piece, Queen) and not color:
-                        screen.blit(black_queen,(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
+                    screen.blit(PieceToPicture(piece,color),(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
 
-        if pygame.event.get(MOUSEBUTTONDOWN):
-            grid_x, grid_y = pygame.mouse.get_pos()
-            board.Get(
+    if future_piece_coord != current_piece_coord:
+        if future_piece_coord and current_piece_coord:
+            current_piece = board.Get(*current_piece_coord)
+            if current_piece and current_piece.color == player_turn:
+                all_legal_moves = board.GetLegalMoves()
+                piece_legal_moves = all_legal_moves[current_piece]
+                if future_piece_coord in piece_legal_moves:
+                    board.Move(current_piece_coord[0], current_piece_coord[1], future_piece_coord[0], future_piece_coord[1])
+                    current_piece_coord = None
+                    future_piece_coord = None
+                    player_turn = not player_turn
+    else:
+        current_piece_coord = None
+        future_piece_coord = None
             
+    if future_piece_coord:  
+        highlighted_piece = board.Get(*future_piece_coord)
+ 
+        if highlighted_piece and highlighted_piece.color == player_turn:
+            pygame.draw.rect(screen, (0, 255, 0), (LetterToColumnIndexToBoard(highlighted_piece.letter), NumberToRowIndexToBoard(highlighted_piece.number), 100, 100), 5)
+            all_legal_moves = board.GetLegalMoves()
+            piece_legal_moves = all_legal_moves[highlighted_piece]
+            for moves in piece_legal_moves:
+                pygame.draw.rect(screen, (0, 255, 0), (LetterToColumnIndexToBoard(moves[0]), NumberToRowIndexToBoard(moves[1]), 100, 100), 5)            
 
     pygame.display.flip()
-
 
 pygame.quit()
 while True:
@@ -656,7 +681,7 @@ while True:
                                 piece_legal_moves = all_legal_moves[piece]
                                 print(piece_legal_moves)
                                 player_move = input("Choose a move from the list of valid moves\n")
-                                if player_move and player_move[0] in ['A','B','C','D','E','F','G','H'] and player_move[1] in [1,2,3,4,5,6,7,8]:
+                                if player_move and player_move[0].upper() in ['A','B','C','D','E','F','G','H'] and player_move[1] in [1,2,3,4,5,6,7,8]:
                                     letter_to = player_move[0].upper()
                                     number_to = int(player_move[1])
                                     if [letter_to, number_to] in piece_legal_moves:
@@ -686,4 +711,4 @@ while True:
         except ValueError:
             print("Please follow the example")
 
-             
+
