@@ -384,6 +384,7 @@ class Board():
         piece_to_move = self.Get(start_letter, start_number)
         self.Set(end_letter, end_number, piece_to_move)
         self.Set(start_letter, start_number, None)
+        
 
     ## Finds the king of the specified color and checks to see if other pieces could move to the kings current location    
     def IsInCheck(self, king_color):
@@ -565,7 +566,9 @@ class Board():
                     return True
                 else:
                     return False
- 
+                
+        
+        
     def __str__(self):
         s = "  |" + "A B C D E F G H|  \n"
         s += "--+---------------+--\n"
@@ -589,7 +592,11 @@ class Board():
 
 pygame.init()
 
+
+
+
 ## variables for pygame
+
 screen = pygame.display.set_mode([800,800])
 pygame.display.set_caption('Chess')
 running = True
@@ -661,17 +668,11 @@ while running:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             current_piece_coord = future_piece_coord
             future_piece_coord = [BoardToColumnIndexToLetter(event.pos[0]), BoardToRowIndexToNumber(event.pos[1])]
-            
+           
     font = pygame.font.Font('freesansbold.ttf', 20)
     small_letter = 'a'
     small_number = '8'
     small_letter_increment = 1
-    if board.CheckMate():
-        messagebox.showinfo('Chess', 'CheckMate')
-        running = False
-    if board.StaleMate():
-        messagebox.showinfo('Chess', 'StaleMate')
-        running = False
     for row in range(0, 801, 100):
         for column in range(0, 801, 200):
             pygame.draw.rect(screen, (240,240,240), (row, column + square_offset, 100, 100))
@@ -693,7 +694,15 @@ while running:
                     number = piece.number
                     color = piece.color
                     screen.blit(PieceToPicture(piece,color),(LetterToColumnIndexToBoard(letter), NumberToRowIndexToBoard(number)))
-
+                    
+    if board.CheckMate():
+        pygame.display.flip()
+        messagebox.showinfo('Chess', 'CheckMate')
+        running = False
+    if board.StaleMate():
+        pygame.display.flip()
+        messagebox.showinfo('Chess', 'StaleMate')
+        running = False
     if future_piece_coord != current_piece_coord:
         if future_piece_coord and current_piece_coord:
             current_piece = board.Get(*current_piece_coord)
@@ -725,6 +734,10 @@ while running:
                     if piece and isinstance(piece, King) and board.IsInCheck(piece.color):
                         pygame.draw.rect(screen, (255, 0, 0), (LetterToColumnIndexToBoard(piece.letter), NumberToRowIndexToBoard(piece.number), 100, 100), 5)
                         
+
+                            
+                            
+        
     pygame.display.flip()
 
 pygame.quit()
@@ -738,6 +751,10 @@ while True:
     choose_piece = input("Choose a piece to move (example 'E1') -1 to surrender\n")
     if choose_piece == "-1":
         print("Player Surrender")
+        break
+    if board.CheckMate():
+        break
+    if board.StaleMate():
         break
     else:
         try:
@@ -758,6 +775,10 @@ while True:
                                     number_to = int(player_move[1])
                                     if [letter_to, number_to] in piece_legal_moves:
                                         board.Move(letter_from, number_from, letter_to, number_to)
+                                        if board.CheckMate():
+                                            break
+                                        if board.StaleMate():
+                                            break
                                         if player_turn:
                                             player_turn = False
                                         else:
@@ -783,4 +804,15 @@ while True:
         except ValueError:
             print("Please follow the example")
 
+             
 
+## alt + 3 = comment highlighted rows; alt + 4 = uncomment highlighted rows
+## ctrl + [ or ctrl + ] = indent or dedent
+## undo is ctrl + z; redo is ctrl + shift + z
+
+## while(game is going):
+##    get the turn
+##    ask for the move
+##    verify the move
+##    do the move
+##    swap turns
