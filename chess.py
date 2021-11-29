@@ -3,7 +3,6 @@ import pygame.locals
 from tkinter import *
 from tkinter import messagebox
 
-
 BOARD_DEFAULTS = """rnbqkbnr
 pppppppp
         
@@ -384,7 +383,6 @@ class Board():
         piece_to_move = self.Get(start_letter, start_number)
         self.Set(end_letter, end_number, piece_to_move)
         self.Set(start_letter, start_number, None)
-        
 
     ## Finds the king of the specified color and checks to see if other pieces could move to the kings current location    
     def IsInCheck(self, king_color):
@@ -566,9 +564,7 @@ class Board():
                     return True
                 else:
                     return False
-                
-        
-        
+ 
     def __str__(self):
         s = "  |" + "A B C D E F G H|  \n"
         s += "--+---------------+--\n"
@@ -592,11 +588,7 @@ class Board():
 
 pygame.init()
 
-
-
-
 ## variables for pygame
-
 screen = pygame.display.set_mode([800,800])
 pygame.display.set_caption('Chess')
 running = True
@@ -733,11 +725,7 @@ while running:
                 for piece in row:
                     if piece and isinstance(piece, King) and board.IsInCheck(piece.color):
                         pygame.draw.rect(screen, (255, 0, 0), (LetterToColumnIndexToBoard(piece.letter), NumberToRowIndexToBoard(piece.number), 100, 100), 5)
-                        
-
-                            
-                            
-        
+   
     pygame.display.flip()
 
 pygame.quit()
@@ -803,16 +791,3 @@ while True:
                     
         except ValueError:
             print("Please follow the example")
-
-             
-
-## alt + 3 = comment highlighted rows; alt + 4 = uncomment highlighted rows
-## ctrl + [ or ctrl + ] = indent or dedent
-## undo is ctrl + z; redo is ctrl + shift + z
-
-## while(game is going):
-##    get the turn
-##    ask for the move
-##    verify the move
-##    do the move
-##    swap turns
