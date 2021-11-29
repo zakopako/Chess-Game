@@ -1,5 +1,8 @@
 import pygame
 import pygame.locals
+from tkinter import *
+from tkinter import messagebox
+
 
 BOARD_DEFAULTS = """rnbqkbnr
 pppppppp
@@ -15,12 +18,6 @@ def LetterToColumnIndex(letter):
 
 def ColumnIndexToLetter(column_index):
     return chr(column_index + ord('A'))
-
-def LetterToColumnIndexToBoard(letter):
-    return (ord(letter.upper()) - ord('A'))*100
-
-def BoardToColumnIndexToLetter(board_pos):
-    return chr(board_pos // 100 + ord('A'))
 
 def NumberToRowIndex(number):
     return 8 - number
@@ -387,7 +384,6 @@ class Board():
         piece_to_move = self.Get(start_letter, start_number)
         self.Set(end_letter, end_number, piece_to_move)
         self.Set(start_letter, start_number, None)
-        
 
     ## Finds the king of the specified color and checks to see if other pieces could move to the kings current location    
     def IsInCheck(self, king_color):
@@ -522,7 +518,54 @@ class Board():
 
                     result[piece] = legal_moves
         return result                                       
-        
+
+    def CheckMate(self):
+        if self.IsInCheck(True) or self.IsInCheck(False):
+            count = 0
+            for row in self.grid:
+                for piece in row:
+                    if piece and isinstance(piece, King) and self.IsInCheck(piece.color):
+                            store_moves = []
+                            all_legal_moves = board.GetLegalMoves()
+                            for item in all_legal_moves.items():
+                                if item[0].color == piece.color:
+                                     store_moves += item[1:]
+                            for moves in store_moves:
+                                if moves:
+                                    count += 1     
+                            if not count:
+                                return True
+                            else:
+                                return False
+
+    def StaleMate(self):
+        store_moves = []
+        store_moves_black = []
+        count = 0
+        count_black = 0
+        all_legal_moves = board.GetLegalMoves()
+        for row in self.grid:
+            for piece in row:
+                for item in all_legal_moves.items():
+                    if item[0].color == True:
+                        store_moves += item[1:]
+                    else:
+                        store_moves_black += item[1:]
+                for moves in store_moves:
+                    if moves:
+                        count += 1
+                if not count:
+                    return True
+                else:
+                    return False
+                for moves in store_moves_black:
+                    if moves:
+                        count_black += 1
+                if not count:
+                    return True
+                else:
+                    return False
+ 
     def __str__(self):
         s = "  |" + "A B C D E F G H|  \n"
         s += "--+---------------+--\n"
@@ -546,16 +589,13 @@ class Board():
 
 pygame.init()
 
-
-
-
 ## variables for pygame
-
 screen = pygame.display.set_mode([800,800])
 pygame.display.set_caption('Chess')
 running = True
 board = Board()
 player_turn = True
+
 white_pawn = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhitePawnNoBackground.png')
 white_rook = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteRookNoBackground.png')
 white_bishop = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteBishopNoBackground.png')
@@ -572,6 +612,12 @@ black_queen = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\C
 
 future_piece_coord = None
 current_piece_coord = None
+
+def LetterToColumnIndexToBoard(letter):
+    return (ord(letter.upper()) - ord('A'))*100
+
+def BoardToColumnIndexToLetter(board_pos):
+    return chr(board_pos // 100 + ord('A'))
 
 def PieceToPicture(piece, color):
 
@@ -602,6 +648,8 @@ def PieceToPicture(piece, color):
             return black_king
         if isinstance(piece, Queen):
             return black_queen
+        
+Tk().wm_withdraw() #to hide the main window
 
 while running:
     
@@ -614,10 +662,28 @@ while running:
             current_piece_coord = future_piece_coord
             future_piece_coord = [BoardToColumnIndexToLetter(event.pos[0]), BoardToRowIndexToNumber(event.pos[1])]
             
+    font = pygame.font.Font('freesansbold.ttf', 20)
+    small_letter = 'a'
+    small_number = '8'
+    small_letter_increment = 1
+    if board.CheckMate():
+        messagebox.showinfo('Chess', 'CheckMate')
+        running = False
+    if board.StaleMate():
+        messagebox.showinfo('Chess', 'StaleMate')
+        running = False
     for row in range(0, 801, 100):
         for column in range(0, 801, 200):
             pygame.draw.rect(screen, (240,240,240), (row, column + square_offset, 100, 100))
+            
         square_offset += 100
+        text = font.render(small_letter, True, (0,0,0)) #a-h
+        num = font.render(small_number, True, (0,0,0)) #1-8
+        screen.blit(text, (row, 770))
+        screen.blit(num, (0, row))
+        small_letter = chr(ord('a') + small_letter_increment)
+        small_number = chr(ord('8') - small_letter_increment)
+        small_letter_increment += 1
         if square_offset > 100:
             square_offset = 0
         for row in board.grid:
@@ -651,8 +717,14 @@ while running:
             all_legal_moves = board.GetLegalMoves()
             piece_legal_moves = all_legal_moves[highlighted_piece]
             for moves in piece_legal_moves:
-                pygame.draw.rect(screen, (0, 255, 0), (LetterToColumnIndexToBoard(moves[0]), NumberToRowIndexToBoard(moves[1]), 100, 100), 5)            
+                pygame.draw.rect(screen, (0, 255, 0), (LetterToColumnIndexToBoard(moves[0]), NumberToRowIndexToBoard(moves[1]), 100, 100), 5)
 
+    if board.IsInCheck(True) or board.IsInCheck(False):
+            for row in board.grid:
+                for piece in row:
+                    if piece and isinstance(piece, King) and board.IsInCheck(piece.color):
+                        pygame.draw.rect(screen, (255, 0, 0), (LetterToColumnIndexToBoard(piece.letter), NumberToRowIndexToBoard(piece.number), 100, 100), 5)
+                        
     pygame.display.flip()
 
 pygame.quit()
