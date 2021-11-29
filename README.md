@@ -5,4 +5,4 @@ I wanted to create this game in order to start getting the gears grinding as I h
 
 ## Preview
 
-![ChessGif](https://user-images.githubusercontent.com/60592017/143802635-3c75f169-8443-47a4-8cff-dd5ef0dc20da.gif)
+![ChessGif](https://user-images.githubusercontent.com/60592017/143805337-42ad7a50-c734-4c7f-b15e-a98f59fff372.gif)
