@@ -383,6 +383,7 @@ class Board():
         piece_to_move = self.Get(start_letter, start_number)
         self.Set(end_letter, end_number, piece_to_move)
         self.Set(start_letter, start_number, None)
+        
 
     ## Finds the king of the specified color and checks to see if other pieces could move to the kings current location    
     def IsInCheck(self, king_color):
@@ -564,7 +565,7 @@ class Board():
                     return True
                 else:
                     return False
- 
+        
     def __str__(self):
         s = "  |" + "A B C D E F G H|  \n"
         s += "--+---------------+--\n"
@@ -589,25 +590,26 @@ class Board():
 pygame.init()
 
 ## variables for pygame
+
 screen = pygame.display.set_mode([800,800])
 pygame.display.set_caption('Chess')
 running = True
 board = Board()
 player_turn = True
 
-white_pawn = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhitePawnNoBackground.png')
-white_rook = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteRookNoBackground.png')
-white_bishop = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteBishopNoBackground.png')
-white_knight = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteKnightNoBackground.png')
-white_king = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteKingNoBackground.png')
-white_queen = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\WhiteQueenNoBackground.png')
+white_pawn = pygame.image.load(r'Chess Pieces\WhitePawnNoBackground.png')
+white_rook = pygame.image.load(r'Chess Pieces\WhiteRookNoBackground.png')
+white_bishop = pygame.image.load(r'Chess Pieces\WhiteBishopNoBackground.png')
+white_knight = pygame.image.load(r'Chess Pieces\WhiteKnightNoBackground.png')
+white_king = pygame.image.load(r'Chess Pieces\WhiteKingNoBackground.png')
+white_queen = pygame.image.load(r'Chess Pieces\WhiteQueenNoBackground.png')
 
-black_pawn = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackPawnNoBackground.png')
-black_rook = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackRookNoBackground.png')
-black_bishop = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackBishopNoBackground.png')
-black_knight = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackKnightNoBackground.png')
-black_king = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackKingNoBackground.png')
-black_queen = pygame.image.load(r'C:\Users\elmas\Desktop\python projects\Chess\Chess Pieces\BlackQueenNoBackground.png')
+black_pawn = pygame.image.load(r'Chess Pieces\BlackPawnNoBackground.png')
+black_rook = pygame.image.load(r'Chess Pieces\BlackRookNoBackground.png')
+black_bishop = pygame.image.load(r'Chess Pieces\BlackBishopNoBackground.png')
+black_knight = pygame.image.load(r'Chess Pieces\BlackKnightNoBackground.png')
+black_king = pygame.image.load(r'Chess Pieces\BlackKingNoBackground.png')
+black_queen = pygame.image.load(r'Chess Pieces\BlackQueenNoBackground.png')
 
 future_piece_coord = None
 current_piece_coord = None
@@ -649,6 +651,7 @@ def PieceToPicture(piece, color):
             return black_queen
         
 Tk().wm_withdraw() #to hide the main window
+
 
 while running:
     
@@ -706,6 +709,7 @@ while running:
                     current_piece_coord = None
                     future_piece_coord = None
                     player_turn = not player_turn
+                    
     else:
         current_piece_coord = None
         future_piece_coord = None
@@ -724,70 +728,73 @@ while running:
             for row in board.grid:
                 for piece in row:
                     if piece and isinstance(piece, King) and board.IsInCheck(piece.color):
-                        pygame.draw.rect(screen, (255, 0, 0), (LetterToColumnIndexToBoard(piece.letter), NumberToRowIndexToBoard(piece.number), 100, 100), 5)
-   
+                        pygame.draw.rect(screen, (255, 0, 0), (LetterToColumnIndexToBoard(piece.letter), NumberToRowIndexToBoard(piece.number), 100, 100), 5)        
+        
     pygame.display.flip()
 
 pygame.quit()
-while True:
-    
-    print(board)
-    if player_turn:
-        print("White's Turn")
-    else:
-        print("Black's Turn")
-    choose_piece = input("Choose a piece to move (example 'E1') -1 to surrender\n")
-    if choose_piece == "-1":
-        print("Player Surrender")
-        break
-    if board.CheckMate():
-        break
-    if board.StaleMate():
-        break
-    else:
-        try:
-            if choose_piece[0].upper() in ['A','B','C','D','E','F','G','H']:
-                letter_from = choose_piece[0].upper()
-                if int(choose_piece[1]) in [1,2,3,4,5,6,7,8]:
-                    number_from = int(choose_piece[1])
-                    if IsValidSquare(letter_from, number_from):
-                        if isinstance(board.Get(letter_from, number_from), Piece):
-                            if board.Get(letter_from, number_from).color == player_turn:
-                                piece = board.Get(letter_from, number_from)
-                                all_legal_moves = board.GetLegalMoves()
-                                piece_legal_moves = all_legal_moves[piece]
-                                print(piece_legal_moves)
-                                player_move = input("Choose a move from the list of valid moves\n")
-                                if player_move and player_move[0].upper() in ['A','B','C','D','E','F','G','H'] and player_move[1] in [1,2,3,4,5,6,7,8]:
-                                    letter_to = player_move[0].upper()
-                                    number_to = int(player_move[1])
-                                    if [letter_to, number_to] in piece_legal_moves:
-                                        board.Move(letter_from, number_from, letter_to, number_to)
-                                        if board.CheckMate():
-                                            break
-                                        if board.StaleMate():
-                                            break
-                                        if player_turn:
-                                            player_turn = False
-                                        else:
-                                            player_turn = True
-                                    else:
-                                        print("Invalid Move")
-                                elif player_move == "-1":
-                                    print("Player Surrender")
-                                    break
-                                else:
-                                    print("You must pick a move")
-                            else:
-                                print("Invalid Piece")
-                        else:
-                            print("Pick a Valid Piece!")
-                    else:
-                        print("Invalid square")
-                else:
-                    print("Invalid number")
-            else:
-                print("Invalid letter")
-                    
-        except ValueError:
-            print("Please follow the example")
+
+
+## Text Based version of the game
+##while True:
+##    
+##    print(board)
+##    if player_turn:
+##        print("White's Turn")
+##    else:
+##        print("Black's Turn")
+##    choose_piece = input("Choose a piece to move (example 'E1') -1 to surrender\n")
+##    if choose_piece == "-1":
+##        print("Player Surrender")
+##        break
+##    if board.CheckMate():
+##        break
+##    if board.StaleMate():
+##        break
+##    else:
+##        try:
+##            if choose_piece[0].upper() in ['A','B','C','D','E','F','G','H']:
+##                letter_from = choose_piece[0].upper()
+##                if int(choose_piece[1]) in [1,2,3,4,5,6,7,8]:
+##                    number_from = int(choose_piece[1])
+##                    if IsValidSquare(letter_from, number_from):
+##                        if isinstance(board.Get(letter_from, number_from), Piece):
+##                            if board.Get(letter_from, number_from).color == player_turn:
+##                                piece = board.Get(letter_from, number_from)
+##                                all_legal_moves = board.GetLegalMoves()
+##                                piece_legal_moves = all_legal_moves[piece]
+##                                print(piece_legal_moves)
+##                                player_move = input("Choose a move from the list of valid moves\n")
+##                                if player_move and player_move[0].upper() in ['A','B','C','D','E','F','G','H'] and player_move[1] in [1,2,3,4,5,6,7,8]:
+##                                    letter_to = player_move[0].upper()
+##                                    number_to = int(player_move[1])
+##                                    if [letter_to, number_to] in piece_legal_moves:
+##                                        board.Move(letter_from, number_from, letter_to, number_to)
+##                                        if board.CheckMate():
+##                                            break
+##                                        if board.StaleMate():
+##                                            break
+##                                        if player_turn:
+##                                            player_turn = False
+##                                        else:
+##                                            player_turn = True
+##                                    else:
+##                                        print("Invalid Move")
+##                                elif player_move == "-1":
+##                                    print("Player Surrender")
+##                                    break
+##                                else:
+##                                    print("You must pick a move")
+##                            else:
+##                                print("Invalid Piece")
+##                        else:
+##                            print("Pick a Valid Piece!")
+##                    else:
+##                        print("Invalid square")
+##                else:
+##                    print("Invalid number")
+##            else:
+##                print("Invalid letter")
+##                    
+##        except ValueError:
+##            print("Please follow the example")
